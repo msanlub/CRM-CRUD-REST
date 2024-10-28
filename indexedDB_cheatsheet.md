@@ -141,6 +141,57 @@ request.onsuccess = (event) => {
 };
 ```
 
+
+#
+# Transactions
+### Transacciones: 
+**Se manejan transacciones para asegurar la integridad de las operaciones.**
+
+```js
+const transaction = db.transaction(["almacen_1", "inventario"], "readwrite");
+
+transaction.oncomplete = (event) => {
+  console.log("Transacción completada");
+};
+```
+#
+### Ejemplo de transacción múltiple
+```js
+function realizarVenta(db, productoId, cantidad) {
+    // Iniciamos una transacción que abarca tanto "inventario" como "ventas"
+    const transaction = db.transaction(["inventario", "ventas"], "readwrite");
+    
+    // Obtenemos los object stores que necesitamos
+    const inventarioStore = transaction.objectStore("inventario");
+    const ventasStore = transaction.objectStore("ventas");
+
+    // Paso 1: Actualizar el inventario
+    const getInventarioRequest = inventarioStore.get(productoId);
+    getInventarioRequest.onsuccess = function(event) {
+        const producto = event.target.result;
+        producto.stock -= cantidad;
+        inventarioStore.put(producto);
+    };
+
+    // Paso 2: Registrar la venta
+    const venta = {
+        productoId: productoId,
+        cantidad: cantidad,
+        fecha: new Date()
+    };
+    ventasStore.add(venta);
+
+    // Finalización de la transacción
+    transaction.oncomplete = function(event) {
+        console.log("Venta realizada con éxito");
+    };
+
+    transaction.onerror = function(event) {
+        console.log("Error en la transacción: " + event.target.error);
+    };
+}
+```
+
 # Querying Data
 ### Consulta de Datos: 
 **Se utilizan índices para realizar búsquedas y se abre un cursor para iterar sobre los registros.**
@@ -159,19 +210,6 @@ request.onsuccess = (event) => {
     console.log(cursor.value);
     cursor.continue(); //siguiente registro
   }
-};
-```
-
-#
-# Transactions
-### Transacciones: 
-**Se manejan transacciones para asegurar la integridad de las operaciones.**
-
-```js
-const transaction = db.transaction(["almacen_1", "inventario"], "readwrite");
-
-transaction.oncomplete = (event) => {
-  console.log("Transacción completada");
 };
 ```
 
