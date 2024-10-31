@@ -13,7 +13,7 @@ El proyecto se divide en dos partes:
 
    [CheatSheet de IndexedDB](indexedDB_cheatsheet.md)
 
-2.Fase de implementación:
+2. Fase de implementación:
 
    [Estructura e implementación código](estructura_codigo.md)
 
