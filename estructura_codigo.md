@@ -3,17 +3,13 @@
 
 ## Tabla de Contenidos
 
-2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
-3. [Estructura del Código](#estructura-del-código)
-4. [Flujo de la Aplicación](#flujo-de-la-aplicación)
-5. [Funciones Principales](#funciones-principales)
-6. [Manejo de Errores](#manejo-de-errores)
+1. [Tecnologías Utilizadas](#tecnologías-utilizadas)
+2. [Estructura del Código](#estructura-del-código)
+3. [Flujo de la Aplicación](#flujo-de-la-aplicación)
+4. [Funciones Principales](#funciones-principales)
+5. [Manejo de Errores](#manejo-de-errores)
 6. [Requisitos del proyecto con ejemplos de codigo](#requisitos-proyecto)
 
-
-## Descripción General
-
-La aplicación permite a los usuarios gestionar una lista de clientes. Los usuarios pueden agregar nuevos clientes, editar la información de los existentes y eliminar clientes de la base de datos. La información se almacena en IndexedDB, lo que permite el almacenamiento persistente en el navegador.
 
 ## Tecnologías Utilizadas
 
