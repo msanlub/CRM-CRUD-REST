@@ -9,17 +9,26 @@ let cliente = {
 };
 
 let db;
+let campo;
 
 // Eventos
 document.addEventListener("DOMContentLoaded", () => {
     iniciarDB();
+
+    document.getElementById("nombre").addEventListener("blur", validarCampoNombre);
+    document.getElementById("email").addEventListener("blur", validarCampoEmail);
+    document.getElementById("telefono").addEventListener("blur", validarCampoTelefono);
+    document.getElementById("empresa").addEventListener("blur", validarCampoEmpresa);
+
     formulario.addEventListener('submit', validarDatos);
+
+    // Cargar datos de cliente si se está editando
+    if (window.location.pathname.includes("editar-cliente.html")) {
+        cargarFormularioEdicion();
+    }
 });
 
-document.getElementById("nombre").addEventListener("blur", validarCampoNombre);
-document.getElementById("email").addEventListener("blur", validarCampoEmail);
-document.getElementById("telefono").addEventListener("blur", validarCampoTelefono);
-document.getElementById("empresa").addEventListener("blur", validarCampoEmpresa);
+
 
 /**
  * Función para iniciar la base de datos 
@@ -64,7 +73,11 @@ function validarDatos(e) {
         cliente.telefono = document.getElementById("telefono").value.trim();
         cliente.empresa = document.getElementById("empresa").value.trim();
 
-        agregarCliente(cliente);
+        if (window.location.pathname.includes("editar-cliente.html")) {
+            editarCliente(cliente); 
+        } else {
+            agregarCliente(cliente); 
+        }
 
         formulario.reset(); 
         limpiarCliente(); 
@@ -137,7 +150,7 @@ function validarCampoEmpresa() {
  * @param {String} campo
  */
 function mostrarError(mensaje, campo) {
-    const campo = document.getElementById(campo);
+    campo = document.getElementById(campo);
     const error = document.createElement("p");
     error.textContent = mensaje;
     error.classList.add("error", "text-red-600", "text-sm");
@@ -150,7 +163,7 @@ function mostrarError(mensaje, campo) {
  * @param {String} campo
  */
 function limpiarError(campo) {
-    const campo = document.getElementById(campo).parentElement;
+    campo = document.getElementById(campo).parentElement;
     const error = campo.querySelector(".error");
     if (error) error.remove();
 }
@@ -159,7 +172,7 @@ function limpiarError(campo) {
  * Limpia el tbody de la tabla donde mostramos la información de cliente en el HTML
  */
 function limpiarHTML() {
-    while (listadoClientes.firstChild) {
+    while (listadoClientes.firstChild()) {
         listadoClientes.removeChild(listadoClientes.firstChild);
     }
 }
@@ -213,27 +226,6 @@ function agregarCliente(cliente) {
 }
 
 /**
- * Edita el cliente modificando los campos
- * @param {Object} cliente 
- */
-function editarCliente(cliente) {
-    const transaction = db.transaction(["clientes"], "readwrite");
-    const store = transaction.objectStore("clientes");
-
-    const request = store.put(cliente);
-
-    request.onsuccess = function() {
-        console.log("Cliente actualizado:", cliente);
-        mostrarClientesDB(); 
-    };
-
-    request.onerror = function(event) {
-        console.error("Error al actualizar el cliente:", event.target.error);
-        alert("Error al actualizar el cliente. Intenta nuevamente.");
-    };
-}
-
-/**
  * Elimina cliente de la db
  * @param {String} email 
  */
@@ -258,7 +250,7 @@ function mostrarClientesDB() {
 
     request.onsuccess = function(event) {
         const clientes = event.target.result;
-        limpiarHTML();
+        //limpiarHTML();
 
         clientes.forEach(cliente => {
             const fila = document.createElement("tr");
@@ -299,9 +291,44 @@ function mostrarClientesDB() {
     };
 }
 
+
 /**
- * Carga los datos de cliente de la db para editarlos
- * @param {String} email 
+ * Edita el cliente modificando los campos
+ */
+function editarCliente(cliente) {
+    const transaction = db.transaction(["clientes"], "readwrite");
+    const store = transaction.objectStore("clientes");
+
+    const request = store.get(cliente.email); // Usar email del cliente
+
+    request.onsuccess = function(event) {
+        const clienteExistente = event.target.result;
+
+        if (clienteExistente) {
+            // Actualizar los datos del cliente
+            clienteExistente.nombre = cliente.nombre;
+            clienteExistente.telefono = cliente.telefono;
+            clienteExistente.empresa = cliente.empresa;
+
+            const updateRequest = store.put(clienteExistente);
+
+            updateRequest.onsuccess = function() {
+                alert("Datos actualizados exitosamente");
+                window.location.href = "index.html"; // Redirigir a la lista de clientes
+            };
+
+            updateRequest.onerror = function() {
+                console.error("Error al actualizar los datos");
+            };
+        } else {
+            console.error("Cliente no encontrado");
+        }
+    };
+}
+
+/**
+ * Carga los datos del cliente de la base de datos en el sessionStorage para editarlos
+ * @param {String} email
  */
 function cargarDatosCliente(email) {
     const transaction = db.transaction(["clientes"], "readonly");
@@ -311,12 +338,35 @@ function cargarDatosCliente(email) {
     request.onsuccess = function(event) {
         const cliente = event.target.result;
 
-        // Asignar los valores al formulario
-        document.getElementById("nombre").value = cliente.nombre;
-        document.getElementById("email").value = cliente.email;
-        document.getElementById("telefono").value = cliente.telefono;
-        document.getElementById("empresa").value = cliente.empresa;
+        if (cliente) {
+            // Guarda los datos del cliente en sessionStorage
+            sessionStorage.setItem("nombre", cliente.nombre);
+            sessionStorage.setItem("telefono", cliente.telefono);
+            sessionStorage.setItem("empresa", cliente.empresa);
+            sessionStorage.setItem("email", cliente.email);
+
+            // Redirige a la página de edición
+            window.location.href = "editar-cliente.html";
+        } else {
+            console.error("Cliente no encontrado");
+        }
     };
+}
+
+/**
+ * Carga los datos del sessionStorage en el formulario de edición
+ */
+function cargarFormularioEdicion() {
+    document.getElementById("nombre").value = sessionStorage.getItem("nombre") || "";
+    document.getElementById("telefono").value = sessionStorage.getItem("telefono") || "";
+    document.getElementById("empresa").value = sessionStorage.getItem("empresa") || "";
+    document.getElementById("email").value = sessionStorage.getItem("email") || "";
+
+    // Limpiar sessionStorage después de cargar los datos
+    sessionStorage.removeItem("nombre");
+    sessionStorage.removeItem("telefono");
+    sessionStorage.removeItem("empresa");
+    sessionStorage.removeItem("email");
 }
 
 
