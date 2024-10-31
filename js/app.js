@@ -14,18 +14,19 @@ let campo;
 // Eventos
 document.addEventListener("DOMContentLoaded", () => {
     iniciarDB();
-
+    
     document.getElementById("nombre").addEventListener("blur", validarCampoNombre);
     document.getElementById("email").addEventListener("blur", validarCampoEmail);
     document.getElementById("telefono").addEventListener("blur", validarCampoTelefono);
     document.getElementById("empresa").addEventListener("blur", validarCampoEmpresa);
 
     formulario.addEventListener('submit', validarDatos);
-
-    // Cargar datos de cliente si se está editando
+    
+    // Cargar datos de cliente si se esta editando
     if (window.location.pathname.includes("editar-cliente.html")) {
         cargarFormularioEdicion();
     }
+
 });
 
 
@@ -42,7 +43,7 @@ function iniciarDB() {
         const db = event.target.result;
         db.createObjectStore("clientes", { keyPath: "email" }); 
     };
-    //exito al cargar la db
+    //exito al cargar la db y mostrar los clientes
     request.onsuccess = function(event) {
         db = event.target.result;
         mostrarClientesDB(); 
@@ -67,6 +68,7 @@ function validarDatos(e) {
     const telefonoValido = validarCampoTelefono();
     const empresaValido = validarCampoEmpresa();
 
+   
     if (nombreValido && emailValido && telefonoValido && empresaValido) {
         cliente.nombre = document.getElementById("nombre").value.trim();
         cliente.email = document.getElementById("email").value.trim();
@@ -232,13 +234,24 @@ function agregarCliente(cliente) {
 function eliminarCliente(email) {
     const transaction = db.transaction(["clientes"], "readwrite");
     const store = transaction.objectStore("clientes");
-    store.delete(email); 
 
-    transaction.onsuccess = function() {
+    const request = store.delete(email);
+
+    request.onsuccess = function() {
         console.log("Cliente eliminado", email);
-        mostrarClientesDB();
+        
+        // Eliminar del HTML mediante el id de fila
+        const fila = document.getElementById(`cliente-${email}`);
+        if (fila) {
+            fila.remove();
+        }
+    };
+
+    request.onerror = function(event) {
+        console.error("Error al eliminar el cliente:", event.target.error);
     };
 }
+
 
 /**
  * Crea los elementos necesarios para mostrar el cliente en el HTML, obteniendo datos de la db
@@ -254,6 +267,8 @@ function mostrarClientesDB() {
 
         clientes.forEach(cliente => {
             const fila = document.createElement("tr");
+            // asigno un id por cada fila
+            fila.id = `cliente-${cliente.email}`;
 
             const nombreCelda = document.createElement("td");
             nombreCelda.classList.add("border", "px-4", "py-2");
@@ -291,41 +306,6 @@ function mostrarClientesDB() {
     };
 }
 
-
-/**
- * Edita el cliente modificando los campos
- */
-function editarCliente(cliente) {
-    const transaction = db.transaction(["clientes"], "readwrite");
-    const store = transaction.objectStore("clientes");
-
-    const request = store.get(cliente.email); // Usar email del cliente
-
-    request.onsuccess = function(event) {
-        const clienteExistente = event.target.result;
-
-        if (clienteExistente) {
-            // Actualizar los datos del cliente
-            clienteExistente.nombre = cliente.nombre;
-            clienteExistente.telefono = cliente.telefono;
-            clienteExistente.empresa = cliente.empresa;
-
-            const updateRequest = store.put(clienteExistente);
-
-            updateRequest.onsuccess = function() {
-                alert("Datos actualizados exitosamente");
-                window.location.href = "index.html"; // Redirigir a la lista de clientes
-            };
-
-            updateRequest.onerror = function() {
-                console.error("Error al actualizar los datos");
-            };
-        } else {
-            console.error("Cliente no encontrado");
-        }
-    };
-}
-
 /**
  * Carga los datos del cliente de la base de datos en el sessionStorage para editarlos
  * @param {String} email
@@ -347,6 +327,40 @@ function cargarDatosCliente(email) {
 
             // Redirige a la página de edición
             window.location.href = "editar-cliente.html";
+        } else {
+            console.error("Cliente no encontrado");
+        }
+    };
+}
+
+/**
+ * Edita el cliente modificando los campos
+ */
+function editarCliente(cliente) {
+    const transaction = db.transaction(["clientes"], "readwrite");
+    const store = transaction.objectStore("clientes");
+
+    const request = store.get(cliente.email);
+
+    request.onsuccess = function(event) {
+        const clienteExistente = event.target.result;
+
+        if (clienteExistente) {
+            // Actualizar los datos del cliente
+            clienteExistente.nombre = cliente.nombre;
+            clienteExistente.telefono = cliente.telefono;
+            clienteExistente.empresa = cliente.empresa;
+
+            const updateRequest = store.put(clienteExistente);
+
+            updateRequest.onsuccess = function() {
+                alert("Datos actualizados exitosamente");
+                window.location.href = "index.html"; // Redirigir a la lista de clientes
+            };
+
+            updateRequest.onerror = function() {
+                console.error("Error al actualizar los datos");
+            };
         } else {
             console.error("Cliente no encontrado");
         }
