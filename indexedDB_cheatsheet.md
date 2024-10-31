@@ -1,4 +1,5 @@
-# 
+![](/img/indexeddb.jpeg)
+ 
 # BASICS
 **Aquí se establece la conexión a la base de datos y se manejan los eventos de éxito y error.**
 
