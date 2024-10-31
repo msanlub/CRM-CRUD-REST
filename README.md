@@ -15,7 +15,7 @@ El proyecto se divide en dos partes:
 
 2.Fase de implementación:
 
-    [Estructura e implementación de código](estructura_codigo.md)
+   [Estructura e implementación código](estructura_codigo.md)
 
 ## Pasos para Ejecutarlo
 
