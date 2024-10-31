@@ -1,4 +1,4 @@
-![./img/restruct.jpg](URL-de-la-imagen)
+![/img/restruct.jpg](URL-de-la-imagen)
 
 
 ## Tabla de Contenidos
